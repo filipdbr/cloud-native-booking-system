@@ -17,6 +17,25 @@ The application is built using a microservices pattern to mimic what a productio
 *   Persistent Database (PostgreSQL): The source of truth that stores finalized, completed, and confirmed reservation records.
 *   Analytics Layer (Reporting Service): An independent Java background worker that pulls data from the PostgreSQL database to generate occupancy metrics for an admin dashboard.
 
+### Traffic Flow Summary
+
+```
+Internet
+   │
+   ▼
+AKS LoadBalancer (public IP)
+   │
+   ▼
+nginx-ingress controller
+   ├── /api/*  ──► reservation-api-svc:8080  (Spring Boot)
+   └── /*      ──► frontend-svc:80           (Nginx / Thymeleaf)
+                        │
+                        └── internally calls reservation-api-svc
+                                │
+                                ├── redis-svc:6379       (internal only)
+                                └── postgres-svc:5432    (internal only)
+```
+
 ---
 
 ## 2. Tech Stack & What I'm Learning Here
