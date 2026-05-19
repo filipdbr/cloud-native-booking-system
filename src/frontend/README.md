@@ -14,8 +14,8 @@ The frontend layer is designed as a lightweight, static web server built on top 
 ## Directory Structure
 
 *   `nginx.conf`: The core configuration file defining the web server behavior, security rules, and upstream proxy routing.
-*   `index.html`: The client-facing dashboard where users interact with the seat reservation mapping system.
-*   `admin.html`: An isolated, secure administration view used to load system and business metrics.
+*   `html/index.html`: The client-facing dashboard where users interact with the seat reservation mapping system.
+*   `html/admin.html`: An isolated, secure administration view used to load system and business metrics.
 *   `Dockerfile`: The instructions used to compile the production-ready container image, optimized to run as a non-root system user.
 
 ---
