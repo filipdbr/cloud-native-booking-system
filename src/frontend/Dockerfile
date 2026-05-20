@@ -9,7 +9,8 @@ COPY html /usr/share/nginx/html
 
 # copyt local config file to the container
 # order is important! nginx.conf changes more often then html files
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY nginx.conf         /etc/nginx/nginx.conf
+COPY default.conf       /etc/nginx/conf.d/default.conf
 
 # we need to prevent docker from using root user
 # change ownership of the catalogs to 'nginx' user & group
