@@ -32,10 +32,16 @@ jobs:
             --name frontend_server \
             -d \
             -p 80:80 \
+            -v ${{ github.workspace }}/src/frontend/nginx.test.conf:/etc/nginx/conf.d/default.conf:ro \
             seat-reservation/frontend:${{ github.sha }}
 
       - name: Wait for server to be ready
         run: sleep 5
+
+      - name: Check if container is working
+        run: |
+          docker container ps -a
+          docker logs frontend_server
 
       - name: Test HTTP 200 on index
         run: curl --fail -s -o /dev/null -w "%{http_code}" http://localhost:80
