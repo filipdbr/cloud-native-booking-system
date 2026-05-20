@@ -2,6 +2,9 @@ name: Frontend CI
 
 on:
   push:
+    branches:
+        - main
+        - dev
     paths:
       - 'src/frontend/**'           # runs only for changes inside this directory
   workflow_dispatch:
