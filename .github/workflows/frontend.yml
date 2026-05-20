@@ -1,0 +1,49 @@
+name: Frontend CI
+
+on:
+  push:
+    paths:
+      - 'src/frontend/**'           # runs only for changes inside this directory
+  workflow_dispatch:
+
+jobs:
+
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Look for errors in Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: src/frontend/Dockerfile
+
+      - name: Build image
+        working-directory: src/frontend
+        run: docker image build -t seat-reservation/frontend:${{ github.sha }} .  
+
+      - name: Run container
+        run: |
+          docker container run \
+            --name frontend_server \
+            -d \
+            -p 80:80 \
+            seat-reservation/frontend:${{ github.sha }}
+
+      - name: Wait for server to be ready
+        run: sleep 5
+
+      - name: Test HTTP 200 on index
+        run: curl --fail -s -o /dev/null -w "%{http_code}" http://localhost:80
+
+      - name: Test HTTP 200 on admin
+        run: curl --fail -s -o /dev/null -w "%{http_code}" http://localhost:80/admin.html
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f frontend_server
+    
+
+
+    
