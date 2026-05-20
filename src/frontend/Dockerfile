@@ -1,5 +1,5 @@
 # choosing the latest light version for today
-FROM stable-alpine3.23
+FROM nginx:stable-alpine3.23
 
 # remove nginx default html files
 RUN rm -rf /usr/share/nginx/html/*
