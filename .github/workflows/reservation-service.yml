@@ -1,0 +1,72 @@
+name: Reservation Service CI
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'src/reservation-service/**'
+  workflow_dispatch:
+
+jobs:
+
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          # cache: maven persists downloaded dependencies between runs
+          # the first build fetches everything from the internet, subsequent runs use cache (~2x faster)
+          cache: 'maven'
+
+      - name: Look for errors in Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: 'src/reservation-service/Dockerfile'
+
+      # run test before building - no sense in building if the code doesn't compile or work as expected
+      - name: Run tests
+        working-directory: 'src/reservation-service'
+        run: mvn test -B
+
+        # -DskipTests — tests already passed above, no need to run them twice
+        # -B — batch mode, disables interactive Maven prompts
+      - name: Build JAR
+        working-directory: 'src/reservation-service'
+        run: mvn package -DskipTests -B
+
+      - name: Build Docker image
+        working-directory: 'src/reservation-service'
+        run: docker image build -t seat-reservation/reservation-service:${{ github.sha }} .
+
+      - name: Run the container
+        run: |
+          docker container run \
+            --name reservation_service \
+            -d \
+            -p 8080:8080 \
+            -e SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/test \
+            -e SPRING_DATA_REDIS_HOST=localhost \
+            seat-reservation/reservation-service:${{ github.sha }}
+
+      - name: Wait for service to be ready
+        run: |
+          for i in $(seq 1 15); do
+            curl -s http://localhost:8080/actuator/health && break
+            echo "Attempt $i — waiting..."
+            sleep 3
+          done
+
+      - name: Test heath endpoint
+        run: curl --fail -s http://localhost:8080/actuator/health
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f reservation_service
