@@ -44,7 +44,7 @@ jobs:
 
       - name: Build Docker image
         working-directory: 'src/reservation-service'
-        run: docker image build -t seat-reservation/reservation-service:${{ github.sha }} .
+        run: docker image build --no-cache -t seat-reservation/reservation-service:${{ github.sha }} .
 
       - name: Run the container
         run: |
