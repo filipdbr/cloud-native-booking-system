@@ -25,3 +25,10 @@ replay_pid*
 
 # my personal notes on the project
 notes
+
+# java, maven and intellij
+.idea/
+**/target/
+*.jar
+*.war
+*.class
