@@ -32,3 +32,6 @@ notes
 *.jar
 *.war
 *.class
+
+# environment
+.env
