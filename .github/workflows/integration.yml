@@ -1,0 +1,54 @@
+name: Integration CI
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'src/**'
+      - 'docker-compose.yml'
+      - '.env.example'
+  workflow_dispatch:
+
+jobs:
+
+  integration-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: |
+          echo "POSTGRES_DB=${{ vars.POSTGRES_DB }}" >> .env
+          echo "POSTGRES_USER=${{ vars.POSTGRES_USER }}" >> .env
+          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
+
+      # force build and detach
+      - name: Build and start all services
+        run: docker compose up --build -d
+
+      # wait for all services to be ready
+      - name: Wait for reservation-service to be ready
+        run: |
+          for i in $(seq 1 20); do
+            curl -s http://localhost:8080/actuator/health && break
+            echo "Attempt $i — waiting..."
+            sleep 5
+          done
+
+      - name: Test — frontend is reachable
+        run: curl --fail -s -o /dev/null http://localhost:80
+
+      - name: Test — reservation-service health
+        run: curl --fail -s http://localhost:8080/actuator/health
+
+      - name: Print logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v
