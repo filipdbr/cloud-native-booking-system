@@ -1,4 +1,4 @@
-# KubeReserve — Cloud-Native Seat Reservation System
+# Cloud-Native Seat Reservation System
 
 > **Status: Work In Progress** — Phase 1 complete, Phase 2 (Terraform/Azure) in progress.
 
@@ -114,7 +114,7 @@ Three GitHub Actions workflows run automatically on push:
 
 ---
 
-## Docker — Key Practices
+## Docker - Key Practices
 
 **Multi-stage builds** — `reservation-service` compiles with a full Maven+JDK image, then ships only the JAR in a lightweight JRE Alpine image (~200MB vs ~500MB).
 
