@@ -8,7 +8,6 @@ on:
     paths:
       - 'src/**'
       - 'docker-compose.yml'
-      - '.env.example'
   workflow_dispatch:
 
 jobs:
