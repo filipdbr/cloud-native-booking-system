@@ -1,81 +1,92 @@
-// src/test/java/reservation/service/SeatServiceTest.java
-
 package reservation.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reservation.model.Seat;
+import reservation.repository.SeatRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
+// @ExtendWith loads Mockito without Spring context — fast, lightweight
+@ExtendWith(MockitoExtension.class)
 class SeatServiceTest {
 
-    // we instantiate SeatService directly — no Spring context needed
+    // @Mock creates a fake SeatRepository — no real database needed
+    @Mock
+    private SeatRepository seatRepository;
+
+    // @InjectMocks creates SeatService and injects the mock repository into it
+    @InjectMocks
     private SeatService seatService;
 
-    // runs before each test — gives us a fresh service with 10 available seats
-    @BeforeEach
-    void setUp() {
-        seatService = new SeatService();
-    }
-
     @Test
-    void getAllSeats_shouldReturn100Seats() {
-        List<Seat> seats = seatService.getAllSeats();
-        assertEquals(100, seats.size());
-    }
+    void getAllSeats_shouldReturnAllSeats() {
+        when(seatRepository.findAll()).thenReturn(List.of(
+                new Seat(1, "AVAILABLE"),
+                new Seat(2, "RESERVED")
+        ));
 
-    @Test
-    void getAllSeats_allSeatsShouldBeAvailableOnStart() {
         List<Seat> seats = seatService.getAllSeats();
-        for (Seat seat : seats) {
-            assertEquals("AVAILABLE", seat.getStatus());
-        }
+        assertEquals(2, seats.size());
     }
 
     @Test
     void reserveSeat_shouldChangeStatusToReserved() {
+        when(seatRepository.findBySeatNumber(1))
+                .thenReturn(Optional.of(new Seat(1, "AVAILABLE")));
+        when(seatRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
         Seat seat = seatService.reserveSeat(1);
         assertEquals("RESERVED", seat.getStatus());
     }
 
     @Test
     void reserveSeat_shouldThrowException_whenSeatAlreadyReserved() {
-        seatService.reserveSeat(1);
+        when(seatRepository.findBySeatNumber(1))
+                .thenReturn(Optional.of(new Seat(1, "RESERVED")));
 
-        // second reservation on the same seat should fail
-        assertThrows(IllegalStateException.class, () -> {
-            seatService.reserveSeat(1);
-        });
+        assertThrows(IllegalStateException.class, () -> seatService.reserveSeat(1));
     }
 
     @Test
     void reserveSeat_shouldThrowException_whenSeatDoesNotExist() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            seatService.reserveSeat(101);
-        });
+        when(seatRepository.findBySeatNumber(99))
+                .thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> seatService.reserveSeat(99));
     }
 
     @Test
     void cancelReservation_shouldChangeStatusToAvailable() {
-        seatService.reserveSeat(1);
+        when(seatRepository.findBySeatNumber(1))
+                .thenReturn(Optional.of(new Seat(1, "RESERVED")));
+        when(seatRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
         Seat seat = seatService.cancelReservation(1);
         assertEquals("AVAILABLE", seat.getStatus());
     }
 
     @Test
     void cancelReservation_shouldThrowException_whenSeatNotReserved() {
-        assertThrows(IllegalStateException.class, () -> {
-            seatService.cancelReservation(1);
-        });
+        when(seatRepository.findBySeatNumber(1))
+                .thenReturn(Optional.of(new Seat(1, "AVAILABLE")));
+
+        assertThrows(IllegalStateException.class, () -> seatService.cancelReservation(1));
     }
 
     @Test
     void cancelReservation_shouldThrowException_whenSeatDoesNotExist() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            seatService.cancelReservation(101);
-        });
+        when(seatRepository.findBySeatNumber(99))
+                .thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> seatService.cancelReservation(99));
     }
 }
