@@ -72,6 +72,11 @@ jobs:
             -e SPRING_DATA_REDIS_HOST=localhost \
             seat-reservation/reservation-service:${{ github.sha }}
 
+      - name: Debug - container logs
+        run: |
+          docker ps -a
+          docker logs reservation_service
+
       - name: Wait for service to be ready
         run: |
           for i in $(seq 1 15); do
